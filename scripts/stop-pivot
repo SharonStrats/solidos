@@ -1,11 +1,43 @@
 #!/bin/bash
 
 repo_root="$(cd "$(dirname "$0")/.." && pwd)"
+protected_pids="\n"
+
+append_protected_pid () {
+  local pid="$1"
+
+  if [[ -n "$pid" ]]; then
+    protected_pids+="${pid}\n"
+  fi
+}
+
+is_protected_pid () {
+  local pid="$1"
+
+  case "$protected_pids" in
+    *$'\n'"$pid"$'\n'*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+current_pid="$$"
+while [[ -n "$current_pid" && "$current_pid" != "0" ]]
+do
+  append_protected_pid "$current_pid"
+  if [[ "$current_pid" == "1" ]]; then
+    break
+  fi
+  current_pid="$(ps -o ppid= -p "$current_pid" 2>/dev/null | tr -d ' ')"
+done
 
 find_matching_pids () {
   local pattern="$1"
   ps -Ao pid=,command= | while read -r pid command
   do
+    if is_protected_pid "$pid"; then
+      continue
+    fi
+
     if [[ "$command" == *"$repo_root"* && "$command" == *"$pattern"* ]]; then
       echo "$pid"
     fi
@@ -25,8 +57,6 @@ kill_matching_processes () {
   echo "$pids" | xargs kill -9 2>/dev/null || true
 }
 
-kill_matching_processes "scripts/watch-pivot"
-kill_matching_processes "npm run watch-pivot"
 kill_matching_processes "concurrently --names"
 kill_matching_processes "community-solid-server"
 
