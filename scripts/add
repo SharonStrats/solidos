@@ -5,6 +5,8 @@ unset PREFIX npm_config_prefix
 export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 
+WORKSPACE_BRANCH="${SOLIDOS_WORKSPACE_BRANCH:-}"
+
 FOLDER=$1
 GIT_URL=$2
 case $1 in
@@ -166,6 +168,16 @@ echo ">>>>> ADDING REPO - $GIT_URL to $FOLDER"
 cd workspaces
 git clone $GIT_URL $FOLDER
 cd $FOLDER
+
+if [[ -n "$WORKSPACE_BRANCH" ]]; then
+  if git ls-remote --exit-code --heads origin "$WORKSPACE_BRANCH" >/dev/null 2>&1; then
+    git switch "$WORKSPACE_BRANCH" 2>/dev/null || git switch -c "$WORKSPACE_BRANCH" "origin/$WORKSPACE_BRANCH"
+    git pull --ff-only origin "$WORKSPACE_BRANCH"
+  else
+    echo "Warning: branch '$WORKSPACE_BRANCH' not found for $FOLDER; using repo default branch"
+  fi
+fi
+
 nvm install
 nvm use --delete-prefix
 npm i
