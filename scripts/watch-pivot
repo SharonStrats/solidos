@@ -4,9 +4,24 @@ unset PREFIX npm_config_prefix
 export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 
+link_workspace_dependency () {
+  local dep_name="$1"
+  local dep_path
+
+  while IFS= read -r dep_path
+  do
+    rm -rf "$dep_path"
+    ln -s "../../$dep_name" "$dep_path"
+  done < <(find workspaces -maxdepth 3 -path "*/node_modules/$dep_name" -type d)
+}
+
 nvm use --delete-prefix
 
 npx lerna bootstrap --force-local
+
+# npm auto-installs peer deps inside package-local node_modules; replace them with workspace links.
+link_workspace_dependency "rdflib"
+link_workspace_dependency "solid-logic"
 
 declare -a packageNames=(
   "solid-logic"
