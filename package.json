@@ -33,7 +33,7 @@
     "delete": "scripts/delete",
     "deletePanes": "npm run add activitystreams-pane && npm run delete chat-pane && npm run delete contacts-pane && npm run delete folder-pane && npm run delete issue-pane && npm run delete meeting-pane && npm run delete profile-pane && npm run delete source-pane",
     "reset": "scripts/reset",
-    "setup": "scripts/install && scripts/reset",
+    "setup": "/bin/bash scripts/setup",
     "release": "/bin/bash scripts/release",
     "bootstrap": "lerna bootstrap --force-local --scope",
     "switchToBranch": "scripts/delete && scripts/switch-branch"
