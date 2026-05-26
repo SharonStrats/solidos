@@ -5,6 +5,9 @@ export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 
 WORKSPACE_BRANCH="${1:-${SOLIDOS_WORKSPACE_BRANCH:-}}"
+PIVOT_PORT="${SOLIDOS_PIVOT_PORT:-3100}"
+PIVOT_BASE_URL="${SOLIDOS_PIVOT_BASE_URL:-http://localhost:${PIVOT_PORT}}"
+PIVOT_DATA_DIR="${SOLIDOS_PIVOT_DATA_DIR:-./data}"
 
 if [[ -n "$WORKSPACE_BRANCH" && -z "${SOLIDOS_BRANCH_SYNCED:-}" ]]; then
   scripts/sync-workspace-branch "$WORKSPACE_BRANCH"
@@ -60,7 +63,7 @@ do
   elif [[ "$package" == "profile-pane" ]]; then
     command="npm run watch:workspace"
   elif [[ "$package" == "pivot" ]]; then
-      command="npx community-solid-server -c ./config/dev-http-suffix.json config/customise-me.json -f ./data -p 3100 -b http://localhost:3100 -m ."
+      command="npx community-solid-server -c ./config/dev-http-suffix.json config/customise-me.json -f ${PIVOT_DATA_DIR} -p ${PIVOT_PORT} -b ${PIVOT_BASE_URL} -m ."
   fi
   # command="echo '---' && pwd && echo '---'"
 
