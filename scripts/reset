@@ -31,6 +31,15 @@ declare -a packages=(
   "rdflib"
   "pivot")
 
+declare -a build_packages=(
+  "rdflib"
+  "solid-logic"
+  "pane-registry"
+  "solid-ui"
+  "solid-panes"
+  "mashlib"
+  "pivot")
+
 # Clone and npm install dependent packages
 for package in "${packages[@]}"
 do
@@ -45,7 +54,7 @@ link_workspace_dependency "rdflib"
 link_workspace_dependency "solid-logic"
 
 # Build dependent packages, ensuring each is in proper Node environment via nvm
-for package in "${packages[@]}"
+for package in "${build_packages[@]}"
 do
   echo ""
   echo "# Building $package"
