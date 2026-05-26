@@ -4,6 +4,14 @@ unset PREFIX npm_config_prefix
 export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 
+WORKSPACE_BRANCH="${1:-${SOLIDOS_WORKSPACE_BRANCH:-}}"
+
+if [[ -n "$WORKSPACE_BRANCH" && -z "${SOLIDOS_BRANCH_SYNCED:-}" ]]; then
+  scripts/sync-workspace-branch "$WORKSPACE_BRANCH"
+fi
+
+scripts/stop-pivot >/dev/null 2>&1 || true
+
 link_workspace_dependency () {
   local dep_name="$1"
   local dep_path
@@ -22,10 +30,13 @@ npx lerna bootstrap --force-local
 # npm auto-installs peer deps inside package-local node_modules; replace them with workspace links.
 link_workspace_dependency "rdflib"
 link_workspace_dependency "solid-logic"
+link_workspace_dependency "solid-ui"
+link_workspace_dependency "profile-pane"
 
 declare -a packageNames=(
   "solid-logic"
   "solid-ui"
+  "profile-pane"
   "solid-panes"
   "mashlib"
   "pivot"
@@ -46,6 +57,8 @@ do
   command="npm run watch"
   if [[ "$package" == "mashlib" ]]; then
       command="sleep 20 && $command"
+  elif [[ "$package" == "profile-pane" ]]; then
+    command="npm run watch:workspace"
   elif [[ "$package" == "pivot" ]]; then
       command="npx community-solid-server -c ./config/dev-http-suffix.json config/customise-me.json -f ./data -p 3100 -b http://localhost:3100 -m ."
   fi

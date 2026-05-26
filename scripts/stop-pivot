@@ -1,0 +1,40 @@
+#!/bin/bash
+
+repo_root="$(cd "$(dirname "$0")/.." && pwd)"
+
+find_matching_pids () {
+  local pattern="$1"
+  ps -Ao pid=,command= | while read -r pid command
+  do
+    if [[ "$command" == *"$repo_root"* && "$command" == *"$pattern"* ]]; then
+      echo "$pid"
+    fi
+  done
+}
+
+kill_matching_processes () {
+  local pattern="$1"
+  local pids
+
+  pids="$(find_matching_pids "$pattern")"
+  if [[ -z "$pids" ]]; then
+    return 0
+  fi
+
+  echo "$pids" | xargs kill 2>/dev/null || true
+  echo "$pids" | xargs kill -9 2>/dev/null || true
+}
+
+kill_matching_processes "scripts/watch-pivot"
+kill_matching_processes "npm run watch-pivot"
+kill_matching_processes "concurrently --names"
+kill_matching_processes "community-solid-server"
+
+port_pids="$(lsof -tiTCP:3100 -sTCP:LISTEN 2>/dev/null || true)"
+if [[ -n "$port_pids" ]]; then
+  echo "$port_pids" | xargs kill 2>/dev/null || true
+  remaining_port_pids="$(lsof -tiTCP:3100 -sTCP:LISTEN 2>/dev/null || true)"
+  if [[ -n "$remaining_port_pids" ]]; then
+    echo "$remaining_port_pids" | xargs kill -9 2>/dev/null || true
+  fi
+fi

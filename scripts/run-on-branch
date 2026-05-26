@@ -1,0 +1,21 @@
+#!/bin/bash
+set -e
+
+BRANCH="$1"
+shift || true
+
+if [[ -z "$BRANCH" ]]; then
+  echo "Usage: scripts/run-on-branch <branch> <command> [args...]"
+  exit 1
+fi
+
+if [[ $# -eq 0 ]]; then
+  echo "Usage: scripts/run-on-branch <branch> <command> [args...]"
+  exit 1
+fi
+
+export SOLIDOS_WORKSPACE_BRANCH="$BRANCH"
+scripts/sync-workspace-branch "$BRANCH"
+export SOLIDOS_BRANCH_SYNCED=1
+
+exec "$@"

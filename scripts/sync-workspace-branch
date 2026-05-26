@@ -1,0 +1,63 @@
+#!/bin/bash
+set -e
+
+unset PREFIX npm_config_prefix
+export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+WORKSPACE_BRANCH="${1:-${SOLIDOS_WORKSPACE_BRANCH:-}}"
+
+if [[ -z "$WORKSPACE_BRANCH" ]]; then
+  exit 0
+fi
+
+declare -a packages=(
+  "rdflib"
+  "solid-logic"
+  "pane-registry"
+  "solid-ui"
+  "profile-pane"
+  "solid-panes"
+  "mashlib"
+  "pivot"
+)
+
+requires_matching_branch () {
+  case "$1" in
+    solid-ui|profile-pane)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+for package in "${packages[@]}"
+do
+  if [[ ! -d "workspaces/$package/.git" ]]; then
+    echo "# Adding $package on branch $WORKSPACE_BRANCH"
+    SOLIDOS_WORKSPACE_BRANCH="$WORKSPACE_BRANCH" npm run add "$package"
+  fi
+
+  if [[ ! -d "workspaces/$package/.git" ]]; then
+    echo "Warning: workspace '$package' is unavailable; skipping"
+    continue
+  fi
+
+  echo "# Syncing $package to $WORKSPACE_BRANCH"
+  pushd "workspaces/$package" >/dev/null
+  git fetch origin --prune
+
+  if git ls-remote --exit-code --heads origin "$WORKSPACE_BRANCH" >/dev/null 2>&1; then
+    git switch "$WORKSPACE_BRANCH" 2>/dev/null || git switch -c "$WORKSPACE_BRANCH" "origin/$WORKSPACE_BRANCH"
+    git pull --ff-only origin "$WORKSPACE_BRANCH"
+  elif requires_matching_branch "$package"; then
+    echo "Error: branch '$WORKSPACE_BRANCH' is required for $package because profile-pane and solid-ui must stay aligned"
+    exit 1
+  else
+    echo "Warning: branch '$WORKSPACE_BRANCH' not found for $package; keeping $(git branch --show-current)"
+  fi
+
+  popd >/dev/null
+done
