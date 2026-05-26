@@ -39,6 +39,8 @@ do
   npm run add $package
 done
 
+npx lerna bootstrap --force-local --ignore-scripts
+
 link_workspace_dependency "rdflib"
 link_workspace_dependency "solid-logic"
 
